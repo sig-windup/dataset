@@ -1,5 +1,7 @@
 from selenium import webdriver
+from datetime import date
 
+TEAM_NAME = dict(NC='NC', OB='두산', KT='KT', LG='LG', WO='키움', HT='KIA', LT='롯데', SS='삼성', SK='SSG', HH='한화')
 # selenium에서 사용할 웹 드라이버 절대 경로 정보
 chromedriver = 'C:\pgm\Python\Windup\chromedriver.exe'
 # selenum의 webdriver에 앞서 설치한 chromedirver를 연동한다.
@@ -26,7 +28,7 @@ def get5Days():
     return days
 
 
-def getArticles():
+def getAddress():
     ele = driver.find_elements_by_xpath('//div[@id=\'_newsList\']/ul/li/div[@class=\'text\']/a[@class=\'title\']')
     address = []
     for e in ele:
@@ -35,60 +37,78 @@ def getArticles():
 
 
 # 기사의 제목과 내용 크롤링
-def crawling_contents(address):
-    for i in range(len(address)):
-        driver.get(address[i])
-        title = driver.find_element_by_tag_name('h4')
-        contents = driver.find_element_by_id('newsEndContents')
-        print(title.text, str(contents.text).split('기사제공'))
-
-
-# 최근 5일의 전 구단 기사 크롤링(부하 걸림 ㅜ)
-def start_crawling(URL):
-    days = get5Days()
-    for d in days:
-        print(d)
-        URL = URL + '&date=' + d
-        driver.get(URL)
-        address = getArticles()
-        crawling_contents(address)
+def getContents(address):
+    driver.get(address)
+    title = driver.find_element_by_tag_name('h4')
+    content = driver.find_element_by_id('newsEndContents')
+    imageElement = driver.find_element_by_xpath('//span[@class=\'end_photo_org\']')
+    imageURL = imageElement.find_element_by_tag_name('img').get_attribute('src')
+    return title.text + str(content.text).split('기사')[0], imageURL
 
 
 # team 코드로 최근 5일 기사 크롤링
 def start_crawling(team_code):
+    team_name = TEAM_NAME[team_code]
     days = get5Days()
     for d in days:
-        print(d)
         URL = 'https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team=' + team_code + '&date=' + d
         driver.get(URL)
-        address = getArticles()
-        crawling_contents(address)
+        address = getAddress()
+        for a in address:
+            content, image = getContents(a)
+            print("구단: ", team_name)
+            print("날짜: ", d)
+            print("사진: ", image)
+            print("내용: ", content)
 
 
 # 전 구단 오늘 기사 크롤링
 def today_crawling(URL):
-    driver.get(URL)
-    address = getArticles()
-    crawling_contents(address)
+    teams = getTeams()
+    for t in teams:
+        URL += t
+        driver.get(URL)
+        address = getAddress()
+        for a in address:
+            content, image = getContents(a)
+            print("구단: ", TEAM_NAME[t])
+            print("날짜: ", date.today().strftime('%Y%m%d'))
+            print("사진: ", image)
+            print("내용: ", content)
+        URL = 'https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team='
+
+        
+# start_crawling(teams[6])
+today_crawling(URL)
 
 
+class Data:
+    def __init__(self, date, team, image, content):
+        self.date = date
+        self.team = team
+        self.image = image
+        self.content = content
 
-days = get5Days()
-# [Index] 0: NC, 1: 두산, 2: KT, 3: LG, 4: 키움, 5: KIA, 6: 롯데, 7: 삼성, 8: SSG, 9: 한화
-teams = getTeams()
+    def getDate(self):
+        return self.date
 
-'''
-[전 구단 오늘 기사 크롤링하기]
-for t in teams:
-    print(t)
-    URL += t
-    today_crawling(URL)
-    URL = 'https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team='
-'''
+    def getTeam(self):
+        return self.team
 
-'''
-[특정 구단 5일 크롤링하기]
-start_crawling(teams[6])
-'''
+    def getImage(self):
+        return self.image
 
-# TODO: 데이터들을 정제해서 CSV 파일로 만들기(id, 일자, 구단, 전체 내용)
+    def getContent(self):
+        return self.content
+
+    def setDate(self, date):
+        self.date = date
+
+    def setTeam(self, team):
+        self.team = team
+
+    def setImage(self, image):
+        self.image = image
+
+    def setContent(self, content):
+        self.content = content
