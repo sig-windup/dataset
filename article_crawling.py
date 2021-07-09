@@ -1,5 +1,6 @@
 from selenium import webdriver
 from datetime import date
+from pandas import Series, DataFrame
 import csv
 
 TEAM_NAME = dict(NC='NC', OB='두산', KT='KT', LG='LG', WO='키움', HT='KIA', LT='롯데', SS='삼성', SK='SSG', HH='한화')
@@ -78,9 +79,12 @@ def getContents(address):
     driver.get(address)
     title = driver.find_element_by_tag_name('h4')
     content = driver.find_element_by_id('newsEndContents')
-    imageElement = driver.find_element_by_xpath('//span[@class=\'end_photo_org\']')
-    imageURL = imageElement.find_element_by_tag_name('img').get_attribute('src')
-    return title.text + str(str(content.text).split('기사')[0]), imageURL
+    try:
+        imageElement = driver.find_element_by_xpath('//span[@class=\'end_photo_org\']')
+        imageURL = imageElement.find_element_by_tag_name('img').get_attribute('src')
+    except:
+        imageURL = '사진 없음'
+    return title.text + str(str(content.text).split('기사')[0]).replace("\n", ' '), imageURL
 
 
 # team 코드로 최근 5일 기사 크롤링
@@ -115,5 +119,52 @@ def today_crawling(URL):
     return data
 
 
-# start_crawling(teams[6])
-# today_crawling(URL)
+def save5DaysArticle(team_code):
+    objArr = start_crawling(team_code)
+    team = []
+    date = []
+    image = []
+    contents = []
+    for o in objArr:
+        team.append(o.getTeam())
+        date.append(o.getDate())
+        image.append(o.getImage())
+        contents.append(o.getContent())
+
+    df = {'team': team,
+          'date': date,
+          'image': image,
+          'contents': contents }
+
+    dataframe = DataFrame(df)
+    dataframe.to_csv('C:/pgm/Python/WindUp/dataset/article.csv', sep=',', na_rep='NaN', mode='a')
+    print(dataframe)
+
+
+def saveTodayArticle():
+    objArr = today_crawling(URL)
+    team = []
+    date = []
+    image = []
+    contents = []
+    for o in objArr:
+        team.append(o.getTeam())
+        date.append(o.getDate())
+        image.append(o.getImage())
+        contents.append(o.getContent())
+
+    df = {'team': team,
+          'date': date,
+          'image': image,
+          'contents': contents }
+
+    dataframe = DataFrame(df)
+    dataframe.to_csv('C:/pgm/Python/WindUp/dataset/article.csv', sep=',', na_rep='NaN', mode='a')
+    print(dataframe)
+
+
+# initial-data(팀 코드 하나씩 넣어야 함)
+# save5DaysArticle('HH')
+
+# 매일 일정한 시각에 돌려야함
+saveTodayArticle()
