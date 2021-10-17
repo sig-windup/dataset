@@ -111,8 +111,8 @@ def getTeam():
 
 #날짜 설정
 def getDate():
-    startDate="20211011"
-    endDate="20211011"
+    startDate="20211016"
+    endDate="20211016"
     days=[]
     dates=dateRange(startDate, endDate)
     for e in dates:
@@ -182,6 +182,7 @@ def start_crawling(teamCode):
     for d in days:
         print("설정 날짜:"+d)
         articleAddress=[]
+
         #page 수 구하기
         tempURL = 'https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team=' + teamCode + '&date=' + d
         driver.get(tempURL)
@@ -189,13 +190,20 @@ def start_crawling(teamCode):
         pages=getPages()
         pages=pages.replace(" ","")
         print(pages)
-
-        for page in pages:
-            print("현재 페이지: "+str(page))
-            URL='https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team=' + teamCode +'&date=' + d+'&page='+str(page)
-            print('url:'+ URL)
+        if pages != "":
+            print("페이지 있을 경우")
+            for page in pages:
+                print("현재 페이지: "+str(page))
+                URL='https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team=' + teamCode +'&date=' + d+'&page='+str(page)
+                print('url:'+ URL)
+                driver.get(URL)
+                articleAddress+=getUrl()
+        else:
+            print("페이지 없는 경우")
+            URL = 'https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team=' + teamCode + '&date=' + d
+            print('url:' + URL)
             driver.get(URL)
-            articleAddress+=getUrl()
+            articleAddress += getUrl()
 
         print(articleAddress)
 
@@ -241,7 +249,7 @@ def saveArticle(teamCode):
     dataFrame=DataFrame(df)
 
     #csv 이름 설정
-    dataFrame.to_csv('article_KT(20211011).csv', sep=',', na_rep='NaN', mode='a')
+    dataFrame.to_csv('article_KT(20211016).csv', sep=',', na_rep='NaN', mode='a')
 
 #크롤링
 #할 때마다 팀코드 확인
