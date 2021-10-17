@@ -84,21 +84,30 @@ def dateRange(start, end):
     return dates
 
 #데이터가져오기
+#페이지수 가져오기
+def getPages():
+    pageEle=driver.find_element_by_class_name('paginate').text
+
+    return pageEle
+
 #url
 def getUrl():
-    urlEle= driver.find_elements_by_class_name('thmb')
+    newsListEle=driver.find_elements_by_class_name('news_list')
+    thmbEle=newsListEle[0].find_elements_by_class_name('thmb')
+
     urlList=[]
-    for e in urlEle:
+    for e in thmbEle:
         urlList.append(e.get_attribute('href'))
     return urlList
 
 #구단
 def getTeam():
-    teamEle=driver.find_element_by_xpath()
-    teamList=[]
+    teamEle = driver.find_elements_by_xpath('//div[@class=\'news_team\']/ul/li')
+    teams = []
     for e in teamEle:
-        teamList.append(e.get_attribute(''))
-    return teamList
+        if e.get_attribute('data-id') != 'kbo':
+            teams.append(e.get_attribute('data-id'))
+    return teams
 
 #날짜 설정
 def getDate():
@@ -146,7 +155,7 @@ def crawling(url): #date, time, publisher, journalist, title, content
     #내용
     allContent = driver.find_element_by_id('newsEndContents').text
     try:
-        #사진 설명 제거
+        #사진 설명 제거-제대로 작동이 안됨,,,ㅠ
          deleteTag=driver.find_element_by_class_name('img_desc').text(By.CLASS_NAME,'img_desc')
          print("삭제할 태그 문장: " + deleteTag)
          allContent = ''.join(x for x in allContent if x not in deleteTag)
@@ -170,24 +179,32 @@ def start_crawling(teamCode):
     teamName=TEAM_NAME[teamCode]
     print("팀이름: "+teamName)
     days=getDate()
-    for date in days:
-        print("기사 날짜:"+date)
-        try:
-            URL='https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team=' + teamCode + '&date=' + date
+    for d in days:
+        print("설정 날짜:"+d)
+        articleAddress=[]
+        #page 수 구하기
+        tempURL = 'https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team=' + teamCode + '&date=' + d
+        driver.get(tempURL)
+
+        pages=getPages()
+        pages=pages.replace(" ","")
+        print(pages)
+
+        for page in pages:
+            print("현재 페이지: "+str(page))
+            URL='https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team=' + teamCode +'&date=' + d+'&page='+str(page)
             print('url:'+ URL)
             driver.get(URL)
-            articleAddress=getUrl()
-            for a in articleAddress:
-                articleURL=a
-                print("기사URL :"+articleURL)
-                date, time, publisher, journalist, title, contents=crawling(a)
-                print(2)
-                article=Data(articleURL, teamName, date, time, publisher, journalist, title, contents)
-                print(3)
-                data.append(article)
-                print("완")
-        except:
-            print("예외")
+            articleAddress+=getUrl()
+
+        print(articleAddress)
+
+        for a in articleAddress:
+            articleURL =a
+            print(articleURL)
+            date, time, publisher, journalist, title, contents = crawling(a)
+            article = Data(articleURL, teamName, date, time, publisher, journalist, title, contents)
+            data.append(article)
         return data
 
 def saveArticle(teamCode):
@@ -224,7 +241,7 @@ def saveArticle(teamCode):
     dataFrame=DataFrame(df)
 
     #csv 이름 설정
-    dataFrame.to_csv('article_KT(2016-2017).csv', sep=',', na_rep='NaN', mode='a')
+    dataFrame.to_csv('article_KT(20211011).csv', sep=',', na_rep='NaN', mode='a')
 
 #크롤링
 #할 때마다 팀코드 확인
