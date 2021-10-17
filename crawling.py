@@ -98,6 +98,7 @@ def getUrl():
     urlList=[]
     for e in thmbEle:
         urlList.append(e.get_attribute('href'))
+
     return urlList
 
 #구단
@@ -111,8 +112,8 @@ def getTeam():
 
 #날짜 설정
 def getDate():
-    startDate="20211016"
-    endDate="20211016"
+    startDate="20211015"
+    endDate="20211015"
     days=[]
     dates=dateRange(startDate, endDate)
     for e in dates:
@@ -186,10 +187,10 @@ def start_crawling(teamCode):
         #page 수 구하기
         tempURL = 'https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team=' + teamCode + '&date=' + d
         driver.get(tempURL)
-
         pages=getPages()
         pages=pages.replace(" ","")
         print(pages)
+
         if pages != "":
             print("페이지 있을 경우")
             for page in pages:
@@ -203,7 +204,7 @@ def start_crawling(teamCode):
             URL = 'https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team=' + teamCode + '&date=' + d
             print('url:' + URL)
             driver.get(URL)
-            articleAddress += getUrl()
+            articleAddress+=getUrl()
 
         print(articleAddress)
 
@@ -249,9 +250,9 @@ def saveArticle(teamCode):
     dataFrame=DataFrame(df)
 
     #csv 이름 설정
-    dataFrame.to_csv('article_KT(20211016).csv', sep=',', na_rep='NaN', mode='a')
+    dataFrame.to_csv('article_SS(20211015).csv', sep=',', na_rep='NaN', mode='a')
 
 #크롤링
 #할 때마다 팀코드 확인
-saveArticle('KT')
+saveArticle('SS')
 print("끝~~")
