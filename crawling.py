@@ -92,13 +92,13 @@ def getPages():
 
 #url
 def getUrl():
+    print("getUrl 중")
     newsListEle=driver.find_elements_by_class_name('news_list')
-    thmbEle=newsListEle[0].find_elements_by_class_name('thmb')
-
+    thmbEle=newsListEle[0].find_elements_by_class_name('title')
     urlList=[]
     for e in thmbEle:
         urlList.append(e.get_attribute('href'))
-
+    print(urlList)
     return urlList
 
 #구단
@@ -113,7 +113,7 @@ def getTeam():
 #날짜 설정
 def getDate():
     startDate="20211015"
-    endDate="20211015"
+    endDate="20211017"
     days=[]
     dates=dateRange(startDate, endDate)
     for e in dates:
@@ -176,16 +176,18 @@ def crawling(url): #date, time, publisher, journalist, title, content
 
 #변경
 def start_crawling(teamCode):
+    teamName = TEAM_NAME[teamCode]
+    articleAddress = []
     data=[]
-    teamName=TEAM_NAME[teamCode]
     print("팀이름: "+teamName)
     days=getDate()
+    print(days)
     for d in days:
         print("설정 날짜:"+d)
-        articleAddress=[]
 
         #page 수 구하기
         tempURL = 'https://sports.news.naver.com/kbaseball/news/index?isphoto=N&type=team&team=' + teamCode + '&date=' + d
+        print(tempURL)
         driver.get(tempURL)
         pages=getPages()
         pages=pages.replace(" ","")
@@ -208,13 +210,13 @@ def start_crawling(teamCode):
 
         print(articleAddress)
 
-        for a in articleAddress:
-            articleURL =a
-            print(articleURL)
-            date, time, publisher, journalist, title, contents = crawling(a)
-            article = Data(articleURL, teamName, date, time, publisher, journalist, title, contents)
-            data.append(article)
-        return data
+    for a in articleAddress:
+        articleURL =a
+        print(articleURL)
+        date, time, publisher, journalist, title, contents = crawling(a)
+        article = Data(articleURL, teamName, date, time, publisher, journalist, title, contents)
+        data.append(article)
+    return data
 
 def saveArticle(teamCode):
     articleList=start_crawling(teamCode)
@@ -250,7 +252,7 @@ def saveArticle(teamCode):
     dataFrame=DataFrame(df)
 
     #csv 이름 설정
-    dataFrame.to_csv('article_SS(20211015).csv', sep=',', na_rep='NaN', mode='a')
+    dataFrame.to_csv('article_SS(20211015~20211017).csv', sep=',', na_rep='NaN', mode='a')
 
 #크롤링
 #할 때마다 팀코드 확인
