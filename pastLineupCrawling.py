@@ -60,7 +60,7 @@ def crawling(URL, csvDate):
             name=teamPlayer.find_element_by_class_name('Lineup_name__jV19m').text
             print(name)
             team=teams[t].text
-            team=team[:2]
+            team = team.split("선발")[0]
             print(team)
             position=teamPlayer.find_element_by_class_name('Lineup_position__265hb').text
             position=position.split(',')[0]
