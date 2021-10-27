@@ -28,14 +28,13 @@ def finalLineupCrawling():
     startingPitcherCrawling.saveArticle('final_lineup_' + str(today) + '.csv', today)
     print("라인업 크롤링 성공")
 
-
 #매일 정해진 시간에 시작
-
 #자정에 선발투수 크롤링
 schedule.every().day.at("00:00:15").do(startingPitcher)
 
 #경기 시작 전 크롤링
 #화~금 6시 반 경기 시작->6시에 크롤링
+schedule.every().monday.at("18:00:15").do(finalLineupCrawling)
 schedule.every().tuesday.at("18:00:15").do(finalLineupCrawling)
 schedule.every().wednesday.at("18:00:15").do(finalLineupCrawling)
 schedule.every().thursday.at("18:00:15").do(finalLineupCrawling)
@@ -70,6 +69,3 @@ while True:
 #schedule.every(5).hours.at("20:30").do(job)
 #주중 특정일에 시작
 #schedule.every().monday.at("12:15").do(job)
-
-
-
