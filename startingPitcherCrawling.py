@@ -110,3 +110,4 @@ def saveArticle(csvName, today):
 
 #크롤링
 saveArticle('startingLineup_20211027.csv', 20211027)
+ 
