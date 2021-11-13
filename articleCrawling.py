@@ -1,9 +1,29 @@
+import sys
 from datetime import datetime, timedelta
 import re
 from pandas import DataFrame
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
+from selenium.webdriver.remote.webelement import WebElement
+from pymongo import MongoClient
+from pymongo.cursor import CursorType
+
+#연결
+host="114.129.200.203"
+port='28018'
+dbURL='mongodb://windup_dba:lotsamhwa@114.129.200.203:28018'
+mongo=MongoClient(dbURL)
+print(mongo)
+
+#기사 하나 등록
+def insertArticle_one(mongo, data, db_name, collection_name):
+    result=mongo[db_name][collection_name].insert_one(data).inserted_id
+    return result
+
+def insertArticle_many(mongo, datas, db_name=None, collection_name=None):
+    result=mongo[db_name][collection_name].insert_many(datas).insert_ids
+    return result
 
 TEAM_NAME = dict(NC='NC', OB='두산', KT='KT', LG='LG', WO='키움', HT='KIA', LT='롯데', SS='삼성', SK='SK', HH='한화')
 
@@ -94,8 +114,8 @@ def getPages():
 
 #url
 def getUrl():
-    newsListEle=driver.find_elements_by_class_name('news_list')
     time.sleep(2)
+    newsListEle=driver.find_elements_by_class_name('news_list')
     thmbEle=newsListEle[0].find_elements_by_class_name('title')
     urlList=[]
     for e in thmbEle:
@@ -114,8 +134,8 @@ def getTeam():
 
 #날짜 설정
 def getDate():
-    startDate="20211015"
-    endDate="20211017"
+    startDate="20211113"
+    endDate="20211113"
     days=[]
     dates=dateRange(startDate, endDate)
     for e in dates:
@@ -123,8 +143,9 @@ def getDate():
     return days
 
 #크롤링
-def crawling(url): #date, time, publisher, journalist, title, content
+def crawling(url): #date, aTime, publisher, journalist, title, content
     driver.get(url)
+    time.sleep(2)
     #날짜와시간
     dateAndTime=driver.find_element_by_class_name('info')
     dateAndTime=dateAndTime.text
@@ -134,8 +155,8 @@ def crawling(url): #date, time, publisher, journalist, title, content
     date=''.join(x for x in date if x not in deleteChar)
     print("날짜: "+date)
     #시간
-    time=dateAndTime[17:25]
-    print("시간: "+time)
+    aTime=dateAndTime[17:25]
+    print("시간: "+aTime)
 
     #출판
     publisher=driver.find_element_by_class_name('source')
@@ -143,12 +164,18 @@ def crawling(url): #date, time, publisher, journalist, title, content
     publisher=publisher[5:]
     print("출판: "+publisher)
 
+
     #기자
-    journalist=driver.find_element_by_class_name('byline')
-    journalist=journalist.text
-    deleteString = "기자 "
-    journalist = ''.join(x for x in journalist if x not in deleteString)
-    print("기자: "+journalist)
+    try:
+        journalist=driver.find_element_by_class_name('byline')
+        journalist=journalist.text
+        deleteString = "기자 "
+        journalist = ''.join(x for x in journalist if x not in deleteString)
+        print("기자: "+journalist)
+
+    except:
+        journalist=''
+        print("기자 없음")
 
     #제목
     title=driver.find_element_by_class_name('title')
@@ -174,7 +201,7 @@ def crawling(url): #date, time, publisher, journalist, title, content
         contentText = re.sub(r'\[[^)]*\)', '', contentText)
         print("기사내용:")
         print(contentText)
-    return date, time, publisher, journalist, title, contentText
+    return date, aTime, publisher, journalist, title, contentText
 
 #변경
 def start_crawling(teamCode):
@@ -241,6 +268,13 @@ def saveArticle(teamCode):
         title.append(a.getTitle())
         content.append(a.getContent())
 
+    # 여러 기사 insert
+    for a in range(len(url)):
+        result = insertArticle_one(mongo, {"url": url[a], "team": team[a], "date": date[a], "time": time[a],
+                                           "publisher": publisher[a], "journalist": journalist[a], "title": title[a],
+                                           "content": content[a]}, "windup", "articles")
+        print(result)
+
     df={
         'url': url,
         'team': team,
@@ -254,9 +288,12 @@ def saveArticle(teamCode):
     dataFrame=DataFrame(df)
 
     #csv 이름 설정
-    dataFrame.to_csv('article_SS(20211015~20211017).csv', sep=',', na_rep='NaN', mode='a')
+    dataFrame.to_csv('article_DS(20211113).csv', sep=',', na_rep='NaN', mode='a')
 
+
+#TEAM_NAME = dict(NC='NC', OB='두산', KT='KT', LG='LG', WO='키움', HT='KIA', LT='롯데', SS='삼성', SK='SK', HH='한화')
 #크롤링
 #할 때마다 팀코드 확인
-saveArticle('SS')
+saveArticle('OB')
 print("끝~~")
+sys.exit()
